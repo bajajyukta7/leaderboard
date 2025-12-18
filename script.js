@@ -18,17 +18,32 @@ let db, ref;
 
 function initFirebase() {
     if (typeof firebase !== 'undefined') {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.database();
-        ref = db.ref('leaderboard');
-        console.log('Firebase initialized successfully');
+        try {
+            if (!firebase.apps.length) {
+                firebase.initializeApp(firebaseConfig);
+            }
+            db = firebase.database();
+            ref = db.ref('leaderboard');
+            console.log('Firebase initialized successfully');
+            return true;
+        } catch (error) {
+            console.error('Firebase init error:', error);
+            return false;
+        }
     } else {
-        console.error('Firebase not loaded');
-        setTimeout(initFirebase, 100);
+        console.log('Waiting for Firebase to load...');
+        return false;
     }
 }
 
-initFirebase();
+// Try to initialize, but don't block
+let firebaseReady = false;
+const firebaseCheck = setInterval(() => {
+    if (initFirebase()) {
+        firebaseReady = true;
+        clearInterval(firebaseCheck);
+    }
+}, 100);
 
 // State
 let leaderboardData = [];
@@ -130,12 +145,15 @@ function handleLogout() {
 
 // Participant Submission
 function handleParticipantSubmission() {
-    console.log('Submit button clicked');
+    console.log('Submit button clicked, Firebase ready:', firebaseReady);
     
-    if (!ref) {
-        showMessage('participantMessage', 'Firebase not ready yet. Please wait...', 'error');
-        console.error('Firebase ref not initialized');
-        return;
+    if (!firebaseReady || !ref) {
+        console.log('Retrying Firebase initialization...');
+        initFirebase();
+        if (!firebaseReady) {
+            showMessage('participantMessage', 'Connecting to database... please try again in a moment', 'error');
+            return;
+        }
     }
     
     const name = document.getElementById('participantNameInput').value.trim();
