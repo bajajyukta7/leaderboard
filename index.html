@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Leaderboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Leaderboard</h1>
+            <button id="hostBtn" class="host-btn">Host Login</button>
+        </div>
+
+        <!-- Host Password Modal -->
+        <div id="hostModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Host Login</h2>
+                <input type="password" id="hostPassword" placeholder="Enter host password">
+                <button id="loginBtn">Login</button>
+                <p id="modalMessage" class="error-message"></p>
+            </div>
+        </div>
+
+        <!-- Participant Submission Form -->
+        <div id="participantPanel" class="participant-panel">
+            <div class="panel-content">
+                <h2>Submit Your Score</h2>
+                <div class="form-group">
+                    <label for="participantNameInput">Your Name:</label>
+                    <input type="text" id="participantNameInput" placeholder="Enter your name">
+                </div>
+                <div class="form-group">
+                    <label for="participantRegularKappaInput">Regular Kappa:</label>
+                    <input type="number" id="participantRegularKappaInput" placeholder="0.0" step="0.0001" min="0" max="1">
+                </div>
+                <div class="form-group">
+                    <label for="participantWeightedKappaInput">Weighted Kappa:</label>
+                    <input type="number" id="participantWeightedKappaInput" placeholder="0.0" step="0.0001" min="0" max="1">
+                </div>
+                <div class="form-group">
+                    <label for="participantPromptInput">Prompt:</label>
+                    <textarea id="participantPromptInput" placeholder="Prompt used for this entry"></textarea>
+                </div>
+                <button id="submitScoreBtn" class="btn-primary">Submit Score</button>
+                <p id="participantMessage" class="message"></p>
+            </div>
+        </div>
+
+        <!-- Leaderboard Table -->
+        <div class="table-wrapper">
+            <table id="leaderboardTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-column="name">Name ↕</th>
+                        <th class="sortable" data-column="regular_kappa">Regular Kappa ↕</th>
+                        <th class="sortable" data-column="weighted_kappa">Weighted Kappa ↕</th>
+                        <th id="promptHeader" class="sortable hidden" data-column="prompt">Prompt ↕</th>
+                    </tr>
+                </thead>
+                <tbody id="leaderboardBody">
+                    <!-- Rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Add Entry Form (Host Only) -->
+        <div id="hostPanel" class="hidden">
+            <div class="panel-content">
+                <h2>Add New Entry</h2>
+                <div class="form-group">
+                    <label for="nameInput">Name:</label>
+                    <input type="text" id="nameInput" placeholder="Participant name">
+                </div>
+                <div class="form-group">
+                    <label for="regularKappaInput">Regular Kappa:</label>
+                    <input type="number" id="regularKappaInput" placeholder="0.0" step="0.0001" min="0" max="1">
+                </div>
+                <div class="form-group">
+                    <label for="weightedKappaInput">Weighted Kappa:</label>
+                    <input type="number" id="weightedKappaInput" placeholder="0.0" step="0.0001" min="0" max="1">
+                </div>
+                <div class="form-group">
+                    <label for="promptInput">Prompt:</label>
+                    <textarea id="promptInput" placeholder="Prompt used for this entry"></textarea>
+                </div>
+                <button id="addEntryBtn" class="btn-primary">Add Entry</button>
+                <button id="logoutBtn" class="btn-secondary">Logout</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
