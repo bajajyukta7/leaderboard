@@ -23,12 +23,28 @@ async function loadFromFirebase() {
         leaderboardData = [];
         
         if (data) {
+            // Create a map to deduplicate by username (case-insensitive)
+            const deduplicatedMap = {};
+            
             Object.values(data).forEach(entry => {
+                if (entry && entry.name) {
+                    const nameKey = entry.name.toLowerCase();
+                    
+                    // Keep only the entry with the highest score for each name
+                    if (!deduplicatedMap[nameKey] || 
+                        entry.regular_kappa > deduplicatedMap[nameKey].regular_kappa) {
+                        deduplicatedMap[nameKey] = entry;
+                    }
+                }
+            });
+            
+            // Convert map back to array
+            Object.values(deduplicatedMap).forEach(entry => {
                 leaderboardData.push(entry);
             });
         }
         
-        console.log('Loaded from Firebase:', leaderboardData.length, 'entries');
+        console.log('Loaded from Firebase:', leaderboardData.length, 'entries (deduplicated)');
         sortAndRender();
     } catch (error) {
         console.error('Error loading from Firebase:', error);
