@@ -102,6 +102,7 @@ function setupEventListeners() {
     // Host panel
     document.getElementById('addEntryBtn').addEventListener('click', handleAddEntry);
     document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
+    document.getElementById('downloadExcelBtn').addEventListener('click', downloadExcel);
     document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     
     // Sortable headers
@@ -304,6 +305,46 @@ function downloadCSV() {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+}
+
+// Excel Export
+function downloadExcel() {
+    if (leaderboardData.length === 0) {
+        alert('No data to export');
+        return;
+    }
+    
+    // Sort by regular_kappa descending
+    const sorted = [...leaderboardData].sort((a, b) => b.regular_kappa - a.regular_kappa);
+    
+    // Create worksheet data
+    const wsData = [
+        ['Name', 'Regular Kappa Score (Dataset B, num_samples=30)', 'Weighted Kappa Score (Dataset A, num_samples=30)', 'Prompt', 'Timestamp'],
+        ...sorted.map((entry, index) => [
+            entry.name,
+            entry.regular_kappa,
+            entry.weighted_kappa,
+            entry.prompt || '-',
+            entry.timestamp
+        ])
+    ];
+    
+    // Create workbook
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Leaderboard");
+    
+    // Set column widths
+    ws['!cols'] = [
+        { wch: 20 },  // Name
+        { wch: 35 },  // Regular Kappa
+        { wch: 35 },  // Weighted Kappa
+        { wch: 40 },  // Prompt
+        { wch: 25 }   // Timestamp
+    ];
+    
+    // Download
+    XLSX.writeFile(wb, `leaderboard_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
 // Sorting
