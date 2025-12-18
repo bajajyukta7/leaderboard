@@ -180,9 +180,9 @@ function handleParticipantSubmission() {
         console.log('Found existing entry with lower score, will replace it');
     }
     
-    // Create entry
+    // Create entry using username (name) as the key
+    const entryKey = name.toLowerCase().replace(/\s+/g, '_');  // Convert name to key format
     const entry = {
-        id: existingEntry ? existingEntry.id : Date.now(),
         name,
         regular_kappa: regularKappa,
         weighted_kappa: weightedKappa,
@@ -191,18 +191,23 @@ function handleParticipantSubmission() {
         timestamp: new Date().toISOString()
     };
     
-    console.log('Submitting entry:', entry);
+    console.log('Submitting entry with key:', entryKey);
     
-    // Save to Firebase (will replace if same ID)
-    saveToFirebase(entry)
-        .then(() => {
+    // Save to Firebase using username as key
+    fetch(`${FIREBASE_DB_URL}/leaderboard/${entryKey}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+    })
+        .then((response) => {
+            if (!response.ok) throw new Error('Failed to save');
             console.log('Entry saved successfully');
             // Clear form and show success
             document.getElementById('participantNameInput').value = '';
             document.getElementById('participantRegularKappaInput').value = '';
             document.getElementById('participantWeightedKappaInput').value = '';
             document.getElementById('participantPromptInput').value = '';
-            const message = existingEntry ? 'Score updated successfully!' : 'Score submitted successfully!';
+            const message = existingEntry ? 'Score updated successfully! Previous entry removed.' : 'Score submitted successfully!';
             showMessage('participantMessage', message, 'success');
             
             // Reload data
@@ -246,7 +251,6 @@ function handleAddEntry() {
     }
 
     const entry = {
-        id: Date.now(),
         name,
         regular_kappa: regularKappa,
         weighted_kappa: weightedKappa,
@@ -255,9 +259,15 @@ function handleAddEntry() {
         timestamp: new Date().toISOString()
     };
 
-    // Save to Firebase
-    saveToFirebase(entry)
-        .then(() => {
+    // Save to Firebase using username as key
+    const entryKey = name.toLowerCase().replace(/\s+/g, '_');
+    fetch(`${FIREBASE_DB_URL}/leaderboard/${entryKey}.json`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entry)
+    })
+        .then((response) => {
+            if (!response.ok) throw new Error('Failed to save');
             // Clear form
             document.getElementById('nameInput').value = '';
             document.getElementById('regularKappaInput').value = '';
