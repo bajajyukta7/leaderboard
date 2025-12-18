@@ -55,8 +55,8 @@
                 <thead>
                     <tr>
                         <th class="sortable" data-column="name">Name ↕</th>
-                        <th class="sortable" data-column="regular_kappa">Regular Kappa ↕</th>
-                        <th class="sortable" data-column="weighted_kappa">Weighted Kappa ↕</th>
+                        <th class="sortable" data-column="regular_kappa">Regular Kappa Score (Dataset B, num_samples=30) ↕</th>
+                        <th class="sortable" data-column="weighted_kappa">Weighted Kappa Score (Dataset A, num_samples=30) ↕</th>
                         <th id="promptHeader" class="sortable hidden" data-column="prompt">Prompt ↕</th>
                     </tr>
                 </thead>
@@ -87,6 +87,7 @@
                     <textarea id="promptInput" placeholder="Prompt used for this entry"></textarea>
                 </div>
                 <button id="addEntryBtn" class="btn-primary">Add Entry</button>
+                <button id="downloadCsvBtn" class="btn-primary">Download CSV</button>
                 <button id="logoutBtn" class="btn-secondary">Logout</button>
             </div>
         </div>

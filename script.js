@@ -10,7 +10,7 @@ const LEADERBOARD_PATH = '/leaderboard.json';
 let leaderboardData = [];
 let isHost = false;
 let sortColumn = 'regular_kappa';
-let sortAscending = false;
+let sortAscending = true;  // true = descending (highest scores first)
 let currentParticipant = null;
 
 // Load data from Firebase REST API
@@ -101,6 +101,7 @@ function setupEventListeners() {
     
     // Host panel
     document.getElementById('addEntryBtn').addEventListener('click', handleAddEntry);
+    document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
     document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     
     // Sortable headers
@@ -264,6 +265,46 @@ function handleAddEntry() {
         });
 }
 
+// CSV Export
+function downloadCSV() {
+    if (leaderboardData.length === 0) {
+        alert('No data to export');
+        return;
+    }
+    
+    // Create CSV header
+    const headers = ['Name', 'Regular Kappa Score (Dataset B, num_samples=30)', 'Weighted Kappa Score (Dataset A, num_samples=30)', 'Prompt', 'Timestamp'];
+    
+    // Sort by regular_kappa descending
+    const sorted = [...leaderboardData].sort((a, b) => b.regular_kappa - a.regular_kappa);
+    
+    // Create CSV rows
+    const rows = sorted.map(entry => [
+        entry.name,
+        entry.regular_kappa.toFixed(4),
+        entry.weighted_kappa.toFixed(4),
+        `"${(entry.prompt || '-').replace(/"/g, '""')}"`,  // Escape quotes
+        entry.timestamp
+    ]);
+    
+    // Combine header and rows
+    const csvContent = [
+        headers.join(','),
+        ...rows.map(row => row.join(','))
+    ].join('\n');
+    
+    // Create blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `leaderboard_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+}
+
 // Sorting
 function handleSort(e) {
     const column = e.target.dataset.column;
@@ -271,7 +312,7 @@ function handleSort(e) {
         sortAscending = !sortAscending;
     } else {
         sortColumn = column;
-        sortAscending = false;
+        sortAscending = column === 'regular_kappa' ? true : false;  // Default descending for regular_kappa
     }
     sortAndRender();
 }
@@ -286,8 +327,14 @@ function sortAndRender() {
             bVal = bVal.toLowerCase();
         }
 
-        if (aVal < bVal) return sortAscending ? 1 : -1;
-        if (aVal > bVal) return sortAscending ? -1 : 1;
+        // For numeric columns, reverse the logic since sortAscending=true means descending (highest first)
+        if (typeof aVal === 'number') {
+            if (aVal < bVal) return sortAscending ? -1 : 1;
+            if (aVal > bVal) return sortAscending ? 1 : -1;
+        } else {
+            if (aVal < bVal) return sortAscending ? 1 : -1;
+            if (aVal > bVal) return sortAscending ? -1 : 1;
+        }
         return 0;
     });
 
