@@ -14,9 +14,21 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const ref = db.ref('leaderboard');
+let db, ref;
+
+function initFirebase() {
+    if (typeof firebase !== 'undefined') {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+        ref = db.ref('leaderboard');
+        console.log('Firebase initialized successfully');
+    } else {
+        console.error('Firebase not loaded');
+        setTimeout(initFirebase, 100);
+    }
+}
+
+initFirebase();
 
 // State
 let leaderboardData = [];
@@ -34,14 +46,20 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('participantMessage').className = 'message success';
     }
     
-    // Load from Firebase
-    ref.on('value', (snapshot) => {
-        leaderboardData = [];
-        snapshot.forEach((childSnapshot) => {
-            leaderboardData.push(childSnapshot.val());
-        });
-        sortAndRender();
-    });
+    // Wait for Firebase to initialize
+    const checkFirebase = setInterval(() => {
+        if (ref) {
+            clearInterval(checkFirebase);
+            // Load from Firebase
+            ref.on('value', (snapshot) => {
+                leaderboardData = [];
+                snapshot.forEach((childSnapshot) => {
+                    leaderboardData.push(childSnapshot.val());
+                });
+                sortAndRender();
+            });
+        }
+    }, 100);
     
     setupEventListeners();
 });
