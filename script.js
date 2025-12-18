@@ -2,48 +2,9 @@
 const HOST_PASSWORD = 'admin123';
 const NUM_SAMPLES = 30;
 
-// Firebase Config
-const firebaseConfig = {
-    apiKey: "AIzaSyDfRJmL0pVLZCJrOu8dVBxFXHWGH8G6t0o",
-    authDomain: "eval-hands-on-leaderboard.firebaseapp.com",
-    databaseURL: "https://eval-hands-on-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "eval-hands-on-leaderboard",
-    storageBucket: "eval-hands-on-leaderboard.appspot.com",
-    messagingSenderId: "913033373883",
-    appId: "1:913033373883:web:5d8e4f8c9b2a1e7d6f9c8b"
-};
-
-// Initialize Firebase
-let db, ref;
-
-console.log('script.js loaded, checking for firebase...');
-
-// Wait for Firebase to be available
-function initFirebase() {
-    console.log('Attempting Firebase init, firebase available:', typeof firebase !== 'undefined');
-    
-    if (typeof firebase === 'undefined') {
-        setTimeout(initFirebase, 100);
-        return;
-    }
-    
-    try {
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-            console.log('Firebase app initialized');
-        }
-        db = firebase.database();
-        ref = db.ref('leaderboard');
-        firebaseReady = true;
-        console.log('Firebase database connected');
-    } catch (error) {
-        console.error('Firebase initialization error:', error);
-        setTimeout(initFirebase, 100);
-    }
-}
-
-let firebaseReady = false;
-initFirebase();
+// Firebase REST API Config
+const FIREBASE_DB_URL = 'https://eval-hands-on-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app';
+const LEADERBOARD_PATH = '/leaderboard.json';
 
 // State
 let leaderboardData = [];
@@ -51,6 +12,50 @@ let isHost = false;
 let sortColumn = 'regular_kappa';
 let sortAscending = false;
 let currentParticipant = null;
+
+// Load data from Firebase REST API
+async function loadFromFirebase() {
+    try {
+        const response = await fetch(FIREBASE_DB_URL + LEADERBOARD_PATH);
+        if (!response.ok) throw new Error('Failed to fetch data');
+        
+        const data = await response.json();
+        leaderboardData = [];
+        
+        if (data) {
+            Object.values(data).forEach(entry => {
+                leaderboardData.push(entry);
+            });
+        }
+        
+        console.log('Loaded from Firebase:', leaderboardData.length, 'entries');
+        sortAndRender();
+    } catch (error) {
+        console.error('Error loading from Firebase:', error);
+    }
+}
+
+// Save entry to Firebase REST API
+async function saveToFirebase(entry) {
+    try {
+        const response = await fetch(FIREBASE_DB_URL + LEADERBOARD_PATH, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [entry.id]: entry })
+        });
+        
+        if (!response.ok) {
+            const error = await response.text();
+            throw new Error(error);
+        }
+        
+        console.log('Entry saved to Firebase');
+        return true;
+    } catch (error) {
+        console.error('Error saving to Firebase:', error);
+        throw error;
+    }
+}
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
@@ -61,20 +66,11 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('participantMessage').className = 'message success';
     }
     
-    // Wait for Firebase to initialize
-    const checkFirebase = setInterval(() => {
-        if (ref) {
-            clearInterval(checkFirebase);
-            // Load from Firebase
-            ref.on('value', (snapshot) => {
-                leaderboardData = [];
-                snapshot.forEach((childSnapshot) => {
-                    leaderboardData.push(childSnapshot.val());
-                });
-                sortAndRender();
-            });
-        }
-    }, 100);
+    // Load initial data
+    loadFromFirebase();
+    
+    // Refresh data every 2 seconds
+    setInterval(loadFromFirebase, 2000);
     
     setupEventListeners();
 });
@@ -145,16 +141,7 @@ function handleLogout() {
 
 // Participant Submission
 function handleParticipantSubmission() {
-    console.log('Submit button clicked, Firebase ready:', firebaseReady);
-    
-    if (!firebaseReady || !ref) {
-        console.log('Retrying Firebase initialization...');
-        initFirebase();
-        if (!firebaseReady) {
-            showMessage('participantMessage', 'Connecting to database... please try again in a moment', 'error');
-            return;
-        }
-    }
+    console.log('Submit button clicked');
     
     const name = document.getElementById('participantNameInput').value.trim();
     const regularKappa = parseFloat(document.getElementById('participantRegularKappaInput').value);
@@ -199,7 +186,7 @@ function handleParticipantSubmission() {
     console.log('Submitting entry:', entry);
     
     // Save to Firebase
-    ref.child(entry.id).set(entry)
+    saveToFirebase(entry)
         .then(() => {
             console.log('Entry saved successfully');
             // Clear form and show success
@@ -208,9 +195,12 @@ function handleParticipantSubmission() {
             document.getElementById('participantWeightedKappaInput').value = '';
             document.getElementById('participantPromptInput').value = '';
             showMessage('participantMessage', 'Score submitted successfully!', 'success');
+            
+            // Reload data
+            setTimeout(loadFromFirebase, 500);
         })
         .catch((error) => {
-            console.error('Firebase error:', error);
+            console.error('Error:', error);
             showMessage('participantMessage', 'Error submitting score: ' + error.message, 'error');
         });
 }
@@ -257,7 +247,7 @@ function handleAddEntry() {
     };
 
     // Save to Firebase
-    ref.child(entry.id).set(entry)
+    saveToFirebase(entry)
         .then(() => {
             // Clear form
             document.getElementById('nameInput').value = '';
@@ -265,6 +255,9 @@ function handleAddEntry() {
             document.getElementById('weightedKappaInput').value = '';
             document.getElementById('promptInput').value = '';
             alert('Entry added successfully');
+            
+            // Reload data
+            setTimeout(loadFromFirebase, 500);
         })
         .catch((error) => {
             alert('Error adding entry: ' + error.message);
@@ -325,49 +318,5 @@ function renderTable(data = null) {
         const row = document.createElement('tr');
         row.innerHTML = '<td colspan="3" style="text-align: center; color: #999;">No entries yet</td>';
         tbody.appendChild(row);
-    }
-}
-
-// Local Storage
-function saveToLocalStorage() {
-    localStorage.setItem('leaderboardData', JSON.stringify(leaderboardData));
-}
-
-function loadFromLocalStorage() {
-    const data = localStorage.getItem('leaderboardData');
-    if (data) {
-        leaderboardData = JSON.parse(data);
-    } else {
-        // Sample data
-        leaderboardData = [
-            {
-                id: 1,
-                name: 'Alice Johnson',
-                regular_kappa: 0.8542,
-                weighted_kappa: 0.8321,
-                prompt: 'Temperature 0.7, top_p 0.9',
-                num_samples: NUM_SAMPLES,
-                timestamp: new Date().toISOString()
-            },
-            {
-                id: 2,
-                name: 'Bob Smith',
-                regular_kappa: 0.7893,
-                weighted_kappa: 0.7654,
-                prompt: 'Temperature 0.5, top_p 0.95',
-                num_samples: NUM_SAMPLES,
-                timestamp: new Date().toISOString()
-            },
-            {
-                id: 3,
-                name: 'Carol Davis',
-                regular_kappa: 0.8234,
-                weighted_kappa: 0.8123,
-                prompt: 'Temperature 0.8, top_p 0.85',
-                num_samples: NUM_SAMPLES,
-                timestamp: new Date().toISOString()
-            }
-        ];
-        saveToLocalStorage();
     }
 }
