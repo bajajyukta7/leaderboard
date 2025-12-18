@@ -167,15 +167,15 @@ function handleParticipantSubmission() {
         return;
     }
     
-    // Check if name already exists
-    if (leaderboardData.some(entry => entry.name.toLowerCase() === name.toLowerCase())) {
-        showMessage('participantMessage', 'This name is already registered', 'error');
-        return;
+    // Check if name already exists and remove old entry if it does
+    const existingEntry = leaderboardData.find(entry => entry.name.toLowerCase() === name.toLowerCase());
+    if (existingEntry) {
+        console.log('Found existing entry, will replace it');
     }
     
     // Create entry
     const entry = {
-        id: Date.now(),
+        id: existingEntry ? existingEntry.id : Date.now(),
         name,
         regular_kappa: regularKappa,
         weighted_kappa: weightedKappa,
@@ -186,7 +186,7 @@ function handleParticipantSubmission() {
     
     console.log('Submitting entry:', entry);
     
-    // Save to Firebase
+    // Save to Firebase (will replace if same ID)
     saveToFirebase(entry)
         .then(() => {
             console.log('Entry saved successfully');
@@ -195,7 +195,8 @@ function handleParticipantSubmission() {
             document.getElementById('participantRegularKappaInput').value = '';
             document.getElementById('participantWeightedKappaInput').value = '';
             document.getElementById('participantPromptInput').value = '';
-            showMessage('participantMessage', 'Score submitted successfully!', 'success');
+            const message = existingEntry ? 'Score updated successfully!' : 'Score submitted successfully!';
+            showMessage('participantMessage', message, 'success');
             
             // Reload data
             setTimeout(loadFromFirebase, 500);
