@@ -275,7 +275,7 @@ function downloadCSV() {
     }
     
     // Create CSV header
-    const headers = ['Name', 'Regular Kappa Score (Dataset B, num_samples=30)', 'Weighted Kappa Score (Dataset A, num_samples=30)', 'Prompt', 'Timestamp'];
+    const headers = ['Name', 'Regular Kappa Score (Dataset B, num_samples=30)', 'Weighted Kappa Score (Dataset B, num_samples=30)', 'Prompt', 'Timestamp'];
     
     // Sort by regular_kappa descending
     const sorted = [...leaderboardData].sort((a, b) => b.regular_kappa - a.regular_kappa);
@@ -319,7 +319,7 @@ function downloadExcel() {
     
     // Create worksheet data
     const wsData = [
-        ['Name', 'Regular Kappa Score (Dataset B, num_samples=30)', 'Weighted Kappa Score (Dataset A, num_samples=30)', 'Prompt', 'Timestamp'],
+        ['Name', 'Regular Kappa Score (Dataset B, num_samples=30)', 'Weighted Kappa Score (Dataset B, num_samples=30)', 'Prompt', 'Timestamp'],
         ...sorted.map((entry, index) => [
             entry.name,
             entry.regular_kappa,
