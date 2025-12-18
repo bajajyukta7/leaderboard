@@ -3,7 +3,7 @@ const HOST_PASSWORD = 'admin123';
 const NUM_SAMPLES = 30;
 
 // Firebase REST API Config
-const FIREBASE_DB_URL = 'https://eval-hands-on-leaderboard-default-rtdb.asia-southeast1.firebasedatabase.app';
+const FIREBASE_DB_URL = 'https://eval-hands-on-leaderboard-default-rtdb.firebaseio.com';
 const LEADERBOARD_PATH = '/leaderboard.json';
 
 // State
