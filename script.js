@@ -130,10 +130,20 @@ function handleLogout() {
 
 // Participant Submission
 function handleParticipantSubmission() {
+    console.log('Submit button clicked');
+    
+    if (!ref) {
+        showMessage('participantMessage', 'Firebase not ready yet. Please wait...', 'error');
+        console.error('Firebase ref not initialized');
+        return;
+    }
+    
     const name = document.getElementById('participantNameInput').value.trim();
     const regularKappa = parseFloat(document.getElementById('participantRegularKappaInput').value);
     const weightedKappa = parseFloat(document.getElementById('participantWeightedKappaInput').value);
     const prompt = document.getElementById('participantPromptInput').value.trim();
+    
+    console.log('Form values:', { name, regularKappa, weightedKappa, prompt });
     
     // Validation
     if (!name) {
@@ -168,9 +178,12 @@ function handleParticipantSubmission() {
         timestamp: new Date().toISOString()
     };
     
+    console.log('Submitting entry:', entry);
+    
     // Save to Firebase
     ref.child(entry.id).set(entry)
         .then(() => {
+            console.log('Entry saved successfully');
             // Clear form and show success
             document.getElementById('participantNameInput').value = '';
             document.getElementById('participantRegularKappaInput').value = '';
@@ -179,6 +192,7 @@ function handleParticipantSubmission() {
             showMessage('participantMessage', 'Score submitted successfully!', 'success');
         })
         .catch((error) => {
+            console.error('Firebase error:', error);
             showMessage('participantMessage', 'Error submitting score: ' + error.message, 'error');
         });
 }
