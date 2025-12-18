@@ -16,34 +16,34 @@ const firebaseConfig = {
 // Initialize Firebase
 let db, ref;
 
+console.log('script.js loaded, checking for firebase...');
+
+// Wait for Firebase to be available
 function initFirebase() {
-    if (typeof firebase !== 'undefined') {
-        try {
-            if (!firebase.apps.length) {
-                firebase.initializeApp(firebaseConfig);
-            }
-            db = firebase.database();
-            ref = db.ref('leaderboard');
-            console.log('Firebase initialized successfully');
-            return true;
-        } catch (error) {
-            console.error('Firebase init error:', error);
-            return false;
+    console.log('Attempting Firebase init, firebase available:', typeof firebase !== 'undefined');
+    
+    if (typeof firebase === 'undefined') {
+        setTimeout(initFirebase, 100);
+        return;
+    }
+    
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+            console.log('Firebase app initialized');
         }
-    } else {
-        console.log('Waiting for Firebase to load...');
-        return false;
+        db = firebase.database();
+        ref = db.ref('leaderboard');
+        firebaseReady = true;
+        console.log('Firebase database connected');
+    } catch (error) {
+        console.error('Firebase initialization error:', error);
+        setTimeout(initFirebase, 100);
     }
 }
 
-// Try to initialize, but don't block
 let firebaseReady = false;
-const firebaseCheck = setInterval(() => {
-    if (initFirebase()) {
-        firebaseReady = true;
-        clearInterval(firebaseCheck);
-    }
-}, 100);
+initFirebase();
 
 // State
 let leaderboardData = [];
