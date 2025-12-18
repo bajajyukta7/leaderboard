@@ -168,10 +168,15 @@ function handleParticipantSubmission() {
         return;
     }
     
-    // Check if name already exists and remove old entry if it does
+    // Check if name already exists
     const existingEntry = leaderboardData.find(entry => entry.name.toLowerCase() === name.toLowerCase());
     if (existingEntry) {
-        console.log('Found existing entry, will replace it');
+        // Only allow update if new score is better
+        if (regularKappa <= existingEntry.regular_kappa) {
+            showMessage('participantMessage', `Your new score (${regularKappa.toFixed(4)}) must be better than your previous score (${existingEntry.regular_kappa.toFixed(4)})`, 'error');
+            return;
+        }
+        console.log('Found existing entry with lower score, will replace it');
     }
     
     // Create entry
