@@ -103,6 +103,7 @@ function setupEventListeners() {
     document.getElementById('addEntryBtn').addEventListener('click', handleAddEntry);
     document.getElementById('downloadCsvBtn').addEventListener('click', downloadCSV);
     document.getElementById('downloadExcelBtn').addEventListener('click', downloadExcel);
+    document.getElementById('clearAllBtn').addEventListener('click', clearAllEntries);
     document.getElementById('logoutBtn').addEventListener('click', handleLogout);
     
     // Sortable headers
@@ -352,6 +353,33 @@ function downloadExcel() {
     XLSX.writeFile(wb, `leaderboard_${new Date().toISOString().split('T')[0]}.xlsx`);
 }
 
+// Clear All Entries (Host Only)
+function clearAllEntries() {
+    if (!confirm('Are you sure you want to delete ALL entries? This cannot be undone!')) {
+        return;
+    }
+    
+    if (!confirm('This will permanently delete all leaderboard data. Are you absolutely sure?')) {
+        return;
+    }
+    
+    // Clear Firebase
+    fetch(FIREBASE_DB_URL + LEADERBOARD_PATH, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(() => {
+        console.log('All entries deleted');
+        leaderboardData = [];
+        renderTable();
+        alert('All entries have been cleared!');
+    })
+    .catch((error) => {
+        console.error('Error deleting entries:', error);
+        alert('Error clearing entries: ' + error.message);
+    });
+}
+
 // Sorting
 function handleSort(e) {
     const column = e.target.dataset.column;
@@ -374,13 +402,14 @@ function sortAndRender() {
             bVal = bVal.toLowerCase();
         }
 
-        // For numeric columns, reverse the logic since sortAscending=true means descending (highest first)
+        // Sort logic: sortAscending=true means highest first (descending) for numbers
         if (typeof aVal === 'number') {
+            // For regular_kappa, highest first means descending
+            return sortAscending ? (bVal - aVal) : (aVal - bVal);
+        } else {
+            // For strings, ascending/descending based on flag
             if (aVal < bVal) return sortAscending ? -1 : 1;
             if (aVal > bVal) return sortAscending ? 1 : -1;
-        } else {
-            if (aVal < bVal) return sortAscending ? 1 : -1;
-            if (aVal > bVal) return sortAscending ? -1 : 1;
         }
         return 0;
     });
